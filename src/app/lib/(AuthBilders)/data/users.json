@@ -1,0 +1,29 @@
+[
+  {
+    "id": "14676abe-922a-4234-b955-b0241b7b09ef",
+    "email": "john@example.com",
+    "password": "$2b$10$Pj1uj0gKZ7Sm/xx7yI2oeOgPCYqX4snrryAD1X/nXsJfa5Z8XW4Qy",
+    "email_verified": false,
+    "name": "John Doe"
+  },
+  {
+    "id": "45ebea2e-20a1-4880-ace6-41c03489717e",
+    "email": "jane@example.com",
+    "password": "$2b$10$BndCxuREZ95n3cVj2ZSuReUqG3/nJyaIG/xWCN9CnHoBjJ8ZtwFKy",
+    "email_verified": false,
+    "name": "Jane Smith"
+  },
+  {
+    "id": "8e0177ff-3b69-46ac-b8f0-83f456e9fc30",
+    "email": "mat.dweb28@gmail.com",
+    "password": "$2a$12$BydaxUY7GU8c0njFKyaoqeXnZjBLQa3mq623x37tBowkVZdxFIw6u",
+    "email_verified": false,
+    "name": "Matias Vargas"
+  },
+  {
+    "id": "60fe70fc-4e9d-4c1b-a8c3-2cdf2c91f3fd",
+    "email": "jesus@heaven.com",
+    "password": "$2b$10$NgJxabEyVSM0BbY3/o9qjutDLXowB3xSV4aGuSDhFDAEYvilz5jnG",
+    "email_verified": false
+  }
+]

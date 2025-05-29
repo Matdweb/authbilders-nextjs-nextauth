@@ -1,6 +1,6 @@
-import ButtonLogout from '@/components/(AuthBilders)/Buttons/ButtonLogout';
-import { UnprotectedBadge } from '@/components/(AuthBilders)/UnprotectedBadge';
-import Link from 'next/link'
+import Link from "next/link";
+import ButtonLogout from "@/components/(AuthBilders)/Buttons/ButtonLogout";
+import { UnprotectedBadge } from "@/components/(AuthBilders)/UnprotectedBadge";
 
 export default function App() {
   return (
@@ -13,13 +13,13 @@ export default function App() {
           <UnprotectedBadge />
         </div>
         <div className="text-center">
-          <h1 className="text-5xl font-semibold tracking-tight text-balance text-gray-100 sm:text-7xl">Home page</h1>
-          <p className="mt-8 text-lg font-medium text-pretty text-gray-300 sm:text-xl/8">This is your <u className="text-primary-400">home</u> page. Play around with your new auth system.</p>
+          <h1 className="text-5xl font-semibold tracking-tight text-balance text-gray-100 sm:text-7xl">AuthBilders.dev</h1>
+          <p className="mt-8 text-lg font-medium text-pretty text-gray-300 sm:text-xl/8">This is a defualt <u className="text-primary-400">unprotected</u> page. Play around with your new auth system.</p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Link
-              href="/protected"
+              href="/"
               className="rounded-md bg-primary-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-primary-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-400">
-              Go to a protected page
+              Go back to home
             </Link>
             <ButtonLogout />
           </div>
