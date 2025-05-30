@@ -7,8 +7,7 @@ import { EyeFilledIcon, EyeSlashFilledIcon } from '@/components/(AuthBilders)/ic
 import { AuthServerActionState } from '@/app/lib/(AuthBilders)/defintions';
 import { GoogleIcon, GithubIcon } from '@/components/(AuthBilders)/icons';
 import { signInWithProvider } from '@/app/lib/(AuthBilders)/utils/auth-providers';
-import { signIn } from 'next-auth/react';
-import { extractErrorDetails } from '@/app/lib/(AuthBilders)/utils/errors';
+import { handleNextAuthSignIn } from '@/app/lib/(AuthBilders)/utils/next-auth';
 
 interface AuthFormField {
   name: string;
@@ -57,7 +56,6 @@ export default function AuthForm({
     throw new Error("AuthForm: server strategy requires `action` function");
   }
 
-
   const handleServerErrors = () => {
     if (!(serverResponse?.success)) {
       const errors = serverResponse?.errors || {};
@@ -89,22 +87,18 @@ export default function AuthForm({
     const password = formData.get("password") as string;
 
     if (strategy === "next-auth") {
-      try {
-        const res = await signIn("credentials", {
-          email,
-          password,
-          callbackUrl: redirectTo || "/",
-          redirect: false,
+      const response = await handleNextAuthSignIn({
+        email,
+        password,
+        redirectTo
+      });
+      if (response.error) {
+        setErrors({
+          ...errors,
+          ["next-auth"]: response.error,
         });
-
-        if (res?.error) {
-          setErrors({ ["next-auth"]: "Invalid email or password" });
-        }
-      } catch (error) {
-        const { message } = extractErrorDetails(error);
-        setErrors({ ["next-auth"]: (message || "Unexpected error during login") });
+        return;
       }
-      return;
     }
 
     if (Object.keys(errors).length > 0) return;
@@ -254,7 +248,7 @@ export default function AuthForm({
             <div className="w-full flex items-center mt-5 mb-3">
               <Alert
                 color={serverResponse.success ? 'success' : 'danger'}
-                title={serverResponse.message?.[0] || ''}
+                title={serverResponse.message?.[0] || 'Unexpected Error :('}
                 description={serverResponse.message?.[1] || ''}
               />
             </div>
