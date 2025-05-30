@@ -5,10 +5,10 @@ import GoogleProvider from "next-auth/providers/google"
 import fs from 'fs/promises'
 import bcrypt from 'bcrypt';
 import path from 'path'
-import { User } from "@/app/lib/defintions"
+import { User } from "@/app/lib/(AuthBilders)/defintions"
 
 const getUsers = async (): Promise<User[]> => {
-  const filePath = path.join(process.cwd(), '/src/app/lib/data/users.json')
+  const filePath = path.join(process.cwd(), '/src/app/lib/(AuthBilders)/data/users.json')
   const data = await fs.readFile(filePath, 'utf8')
   return JSON.parse(data)
 }

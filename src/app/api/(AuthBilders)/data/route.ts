@@ -1,4 +1,4 @@
-import { User } from "@/app/lib/defintions";
+import { User } from "@/app/lib/(AuthBilders)/defintions";
 import { getServerSession } from "next-auth";
 
 export async function GET() {

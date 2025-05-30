@@ -4,10 +4,11 @@ import { Form, Input, Button, Alert, Spinner } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { ZodType } from 'zod';
 import { EyeFilledIcon, EyeSlashFilledIcon } from '@/components/(AuthBilders)/icons';
-import { AuthServerActionState } from '@/app/lib/defintions';
+import { AuthServerActionState } from '@/app/lib/(AuthBilders)/defintions';
 import { GoogleIcon, GithubIcon } from '@/components/(AuthBilders)/icons';
-import { signInWithProvider } from '@/app/lib/utils/auth-providers';
+import { signInWithProvider } from '@/app/lib/(AuthBilders)/utils/auth-providers';
 import { signIn } from 'next-auth/react';
+import { extractErrorDetails } from '@/app/lib/(AuthBilders)/utils/errors';
 
 interface AuthFormField {
   name: string;
@@ -93,14 +94,15 @@ export default function AuthForm({
           email,
           password,
           callbackUrl: redirectTo || "/",
-          redirect: true,
+          redirect: false,
         });
 
         if (res?.error) {
           setErrors({ ["next-auth"]: "Invalid email or password" });
         }
       } catch (error) {
-        setErrors({ ["next-auth"]: "Unexpected error during login" });
+        const { message } = extractErrorDetails(error);
+        setErrors({ ["next-auth"]: (message || "Unexpected error during login") });
       }
       return;
     }
@@ -122,7 +124,6 @@ export default function AuthForm({
 
     if (!response?.success) {
       const providers = response?.errors?.['providers']?.[0] || "";
-      console.log(providers)
       setErrors({
         ...errors,
         providers

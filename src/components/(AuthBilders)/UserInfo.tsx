@@ -4,7 +4,7 @@ import { Tooltip, User, Chip, Code } from "@heroui/react";
 import { usePathname } from "next/navigation";
 import { CloseIcon } from "./icons";
 import { useSession } from "next-auth/react";
-import { User as UserType } from "@/app/lib/defintions";
+import { User as UserType } from "@/app/lib/(AuthBilders)/defintions";
 
 export function UserInfo() {
   const pathname = usePathname();

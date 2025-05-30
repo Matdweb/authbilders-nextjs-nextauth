@@ -7,8 +7,9 @@ import { AuthServerActionState } from './defintions';
 import { errorResponse, successResponse } from './utils/response';
 import { extractErrorDetails } from './utils/errors';
 import { generateUID } from './utils/uuid';
+import type { User } from './defintions';
 
-const USERS_PATH = path.join(process.cwd(), 'src/app/lib/data/users.json');
+const USERS_PATH = path.join(process.cwd(), 'src/app/lib/(AuthBilders)/data/users.json');
 
 export async function signUp(
     _prev: AuthServerActionState,
@@ -21,7 +22,7 @@ export async function signUp(
         const raw = await fs.readFile(USERS_PATH, 'utf-8');
         const users = JSON.parse(raw);
 
-        const exists = users.find((u: any) => u.email === email);
+        const exists = users.find((u: User) => u.email === email);
         if (exists) {
             return errorResponse(['User already exists'], {
                 email: ['Email already registered']
