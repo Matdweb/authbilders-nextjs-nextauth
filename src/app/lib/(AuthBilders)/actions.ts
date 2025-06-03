@@ -1,46 +1,51 @@
-// app/lib/actions/signup.ts
-'use server'
-import path from 'path';
-import fs from 'fs/promises';
-import bcrypt from 'bcrypt';
+'use server';
 import { AuthServerActionState } from './defintions';
 import { errorResponse, successResponse } from './utils/response';
 import { extractErrorDetails } from './utils/errors';
-import { generateUID } from './utils/uuid';
-import type { User } from './defintions';
-
-const USERS_PATH = path.join(process.cwd(), 'src/app/lib/(AuthBilders)/data/users.json');
+import { FormDataSchema, passwordSchema } from './zod';
+import { addUser, findUserByEmail } from './dal/queries';
+import { sendEmailVerification } from './utils/email';
+import { createResetPasswordToken } from './utils/jwt';
+import { resetUserPassword } from './dal/queries';
 
 export async function signUp(
     _prev: AuthServerActionState,
     formData: FormData
 ): Promise<AuthServerActionState> {
     try {
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
+        const fields = FormDataSchema.safeParse({
+            email: formData.get('email'),
+            password: formData.get('password'),
+        })
 
-        const raw = await fs.readFile(USERS_PATH, 'utf-8');
-        const users = JSON.parse(raw);
+        if (!fields.success) {
+            return errorResponse(['Sign Up failed. Check input.'], fields.error.flatten().fieldErrors)
+        }
 
-        const exists = users.find((u: User) => u.email === email);
+        const { email, password } = fields.data;
+        const exists = findUserByEmail(email);
+
         if (exists) {
             return errorResponse(['User already exists'], {
                 email: ['Email already registered']
             });
         }
 
-        const hash = await bcrypt.hash(password, 10);
-        const newUser = {
-            id: generateUID(),
-            email,
-            password: hash,
-            email_verified: false,
-        };
+        const res = await addUser({ email, password });
+        if (!res?.success) {
+            return errorResponse(['Failed to register user'], res?.errors || {});
+        }
 
-        users.push(newUser);
-        await fs.writeFile(USERS_PATH, JSON.stringify(users, null, 2));
+        const emailRes = await sendEmailVerification(email)
 
-        return successResponse(['Account created successfully!']);
+        if (!emailRes.success) {
+            return errorResponse(['User created, but email failed', ...emailRes.message], {})
+        }
+
+        return successResponse(['User created', 'Verification email sent'], {
+            user: res.user,
+            data: emailRes.data,
+        })
     }
     catch (error) {
         const { message = 'Unexpected error occurred' } = extractErrorDetails(error);
@@ -50,3 +55,61 @@ export async function signUp(
     }
 }
 
+export async function sendPasswordResetEmail(
+    _prevState: AuthServerActionState,
+    formData: FormData
+): Promise<AuthServerActionState> {
+    const email = formData.get("email") as string;
+    const resetToken = await createResetPasswordToken(email);
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+    try {
+        const response = await fetch(`${baseUrl}/api/reset-password/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email,
+                redirectUrl: `${baseUrl}/forgot-password/reset-password?token=${resetToken}`
+            }),
+        });
+
+        const result = await response.json();
+        return {
+            success: response.ok,
+            message: [result?.message || "Unknown server response"],
+            data: result?.data ?? null,
+        };
+    } catch (error) {
+        const { message } = extractErrorDetails(error);
+        errorResponse(["Email server error", message])
+    }
+}
+
+export async function handlePasswordReset(
+    _prevState: AuthServerActionState,
+    formData: FormData
+) {
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    const validated = passwordSchema.safeParse(password);
+    if (!validated.success) {
+        return errorResponse(["Invalid password"], {
+            password: validated.error.flatten().fieldErrors[0]
+        });
+    }
+
+    try {
+        await resetUserPassword(email, password);
+
+        return successResponse([
+            "Password updated successfully.",
+            "You can now login with your new password"
+        ]);
+    } catch {
+        return errorResponse([
+            "Failed to update password.",
+            "Please try again"
+        ]);
+    }
+}
