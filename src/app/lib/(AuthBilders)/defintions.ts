@@ -1,8 +1,18 @@
+import type { CreateEmailResponseSuccess } from "resend";
+
+export type AuthServerActionStateData = CreateEmailResponseSuccess | null;
+
+export type AuthServerActionStateExtras = {
+  user?: User;
+  data?: AuthServerActionStateData;
+  errors?: AuthServerActionStateErrors;
+};
 
 export type AuthServerActionState = {
   success?: boolean;
   message?: string[];
-  user?: User | null;
+  user?: User;
+  data?: AuthServerActionStateData;
   errors?: AuthServerActionStateErrors;
 } | undefined;
 
@@ -15,9 +25,9 @@ export type AuthServerActionStateErrors = {
 
 export type User = {
   id?: string;
-  email?: string | null;
-  name?: string | null;
-  image?: string | null;
+  email?: string;
+  name?: string;
+  image?: string;
   email_verified?: boolean;
   exp?: number;
   password?: string;
@@ -37,4 +47,11 @@ export type ServerResponse<T = unknown> = {
 
 export type CatchedError = {
   code?: string;
+}
+
+export interface Session {
+  expires?: Date | string;
+  exp?: number;
+  user?: User;
+  [key: string]: unknown;
 }
