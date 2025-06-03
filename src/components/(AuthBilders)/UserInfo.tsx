@@ -1,14 +1,17 @@
 'use client';
 import { useState } from "react";
-import { Tooltip, User, Chip, Code } from "@heroui/react";
+import { Tooltip, User, Chip, Code, Spinner } from "@heroui/react";
 import { usePathname } from "next/navigation";
 import { CloseIcon } from "./icons";
 import { useSession } from "next-auth/react";
 import { User as UserType } from "@/app/lib/(AuthBilders)/defintions";
+import { sendEmailVerificationToast } from "./Alerts/Toasts";
+import { sendEmailVerification } from "@/app/lib/(AuthBilders)/utils/email";
 
 export function UserInfo() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isSending, setIsSending] = useState<boolean>(false);
   const { data: session } = useSession();
 
   if (["/login", "/signUp"].includes(pathname)) return null;
@@ -16,10 +19,24 @@ export function UserInfo() {
   if (!session) return null;
 
   const { email, name, image, email_verified } = (session.user as UserType) || {};
+  
+  const handleSendEmailVerification = async () => {
+    if (email_verified) return;
+    setIsSending(true);
+
+    const response = await sendEmailVerification(email || "");
+
+    sendEmailVerificationToast({
+      title: response.success ? "Email verification sent" : "Failed to send verification email",
+      description: (response.success ? "Check your inbox and junk" : "Try again"),
+      color: response.success ? "success" : "danger",
+    });
+    setIsSending(false);
+  };
 
   function SessionDisplay() {
     return (
-      <div className=" w-full max-w-56 md:max-w-full sm:max-w-80 bg-[#0e0e0e] border border-gray-800 rounded-xl shadow-xl p-4 text-gray-100">
+      <div className=" w-full max-w-56 md:max-w-[600px] sm:max-w-80 bg-[#0e0e0e] border border-gray-800 rounded-xl shadow-xl p-4 text-gray-100">
         <div className="flex justify-between items-start mb-2">
           <span className="text-xs font-medium text-gray-400">Session data:</span>
           <button
@@ -38,8 +55,14 @@ export function UserInfo() {
           color={email_verified ? "success" : "danger"}
           variant="dot"
           className="mt-2 border-none h-auto cursor-pointer py-1 bg-white/10 rounded-lg min-w-full"
+          onClick={handleSendEmailVerification}
         >
-          {email_verified ? "Email verified" : "Email not verified"}
+          {
+            isSending ?
+              <Spinner color="white" variant="dots" className="max-h-1" />
+              :
+              (email_verified ? "Email verified" : "Email not verified")
+          }
         </Chip>
       </div >
     )
