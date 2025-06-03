@@ -2,16 +2,9 @@ import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GitHubProvider from "next-auth/providers/github"
 import GoogleProvider from "next-auth/providers/google"
-import fs from 'fs/promises'
 import bcrypt from 'bcrypt';
-import path from 'path'
 import { User } from "@/app/lib/(AuthBilders)/defintions"
-
-const getUsers = async (): Promise<User[]> => {
-  const filePath = path.join(process.cwd(), '/src/app/lib/(AuthBilders)/data/users.json')
-  const data = await fs.readFile(filePath, 'utf8')
-  return JSON.parse(data)
-}
+import { getAllUsers } from "@/app/lib/(AuthBilders)/dal/queries"
 
 const time_seconds = 60 * 60 * 1 // 1 hour
 
@@ -32,13 +25,18 @@ const handler = NextAuth({
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
-        const users = await getUsers()
+        const users = await getAllUsers()
         const user = users.find(u => u.email === credentials?.email)
         if (!user || !user.password) return null
 
         const valid = await bcrypt.compare(credentials!.password, user.password)
         if (!valid) return null
-        return { id: user.email || "", email: user.email, expires: 60 * 60 * 1 }
+        return {
+          id: user.id || "",
+          email: user.email,
+          name: user.name,
+          email_verified: user.email_verified,
+        };
       }
     })
   ],
@@ -50,24 +48,31 @@ const handler = NextAuth({
     maxAge: time_seconds
   },
   callbacks: {
-    async jwt({ token, account }) {
-      if (account) {
-        token.exp = Math.floor(Date.now() / 1000) + time_seconds // Set expiration time
+    async jwt({ token, account, user }) {
+      if (user) {
+        token.id = user.id;
+        token.email_verified = (user as User).email_verified;
       }
-      return token
+
+      if (account) {
+        token.accessToken = account.access_token;
+        token.provider = account.provider;
+      }
+      return token;
     },
     async session({ session, token }) {
       session.expires = token.exp as string
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          email: token.email || null,
-          name: token.name || null,
-          image: token.picture || null,
-          email_verified: token.email_verified || false
-        } as User
-      }
+      const provider = token.provider;
+      session.user = {
+        id: token.id,
+        provider,
+        access_token: token.accessToken,
+        name: token.name,
+        email: token.email,
+        image: token.picture,
+        email_verified: (provider === "credentials") ? token.email_verified : true,
+      } as User;
+      return session;
     }
   },
   pages: {
